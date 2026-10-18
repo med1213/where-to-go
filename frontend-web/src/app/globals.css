@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FBFBFA;
+  --foreground: #1c1917;
+}
+
+/* Enforce Noto Sans Lao as primary font across entire application */
+*, *::before, *::after {
+  font-family: var(--font-noto-sans-lao), 'Noto Sans Lao', var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, span, p, a, div {
+  font-family: var(--font-noto-sans-lao), 'Noto Sans Lao', var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

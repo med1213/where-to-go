@@ -1,0 +1,48 @@
+# Environment
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+
+# Node modules & build
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.next/
+**/.next/
+build/
+**/build/
+.turbo/
+**/.turbo/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Cryptographic Keys (PS512 RSA private/public keys)
+keys/
+**/keys/
+*.pem
+**/*.pem
+
+# Uploads & Media Files
+uploads/
+**/uploads/
+*.tmp
+
+# Logs
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+

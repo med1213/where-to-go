@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum PlaceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FavoriteType {
+  WANNA_GO
+  FAVORITE
+  VISITED
+}
+
+model User {
+  id               String      @id @default(uuid())
+  username         String?     @unique
+  phoneNumber      String?     @unique
+  passwordHash     String
+  displayName      String
+  avatarUrl        String?
+  role             Role        @default(USER)
+  refreshTokenHash String?
+  lastLoginAt      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+
+  places           Place[]     @relation("UserPlaces")
+  reviewedPlaces   Place[]     @relation("AdminReviews")
+  comments         Comment[]
+  favorites        Favorite[]
+
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Province {
+  id        Int        @id @default(autoincrement())
+  code      String     @unique
+  nameLo    String
+  nameEn    String
+  slug      String     @unique
+  highlight String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  districts District[]
+  places    Place[]
+
+  @@index([deletedAt])
+  @@map("provinces")
+}
+
+model District {
+  id         Int       @id @default(autoincrement())
+  provinceId Int
+  code       String?
+  nameLo     String
+  nameEn     String
+  slug       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  province   Province  @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  places     Place[]
+
+  @@unique([provinceId, slug])
+  @@index([provinceId])
+  @@index([deletedAt])
+  @@map("districts")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  icon        String?
+  description String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  places      Place[]
+
+  @@index([deletedAt])
+  @@map("categories")
+}
+
+model Place {
+  id              String       @id @default(uuid())
+  userId          String
+  categoryId      Int
+  provinceId      Int?
+  districtId      Int?
+  title           String
+  slug            String       @unique
+  description     String       @db.Text
+  province        String
+  district        String?
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  priceRange      String?
+  priceLao        String?
+  priceForeigner  String?
+  openingHours    Json?
+  contactInfo     Json?
+  status          PlaceStatus  @default(PENDING)
+  rejectionReason String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  viewCount       Int          @default(0)
+  favoriteCount   Int          @default(0)
+  commentCount    Int          @default(0)
+  isFeatured      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  user            User         @relation("UserPlaces", fields: [userId], references: [id], onDelete: Cascade)
+  category        Category     @relation(fields: [categoryId], references: [id])
+  reviewedBy      User?        @relation("AdminReviews", fields: [reviewedById], references: [id])
+  provinceRel     Province?    @relation(fields: [provinceId], references: [id])
+  districtRel     District?    @relation(fields: [districtId], references: [id])
+  media           PlaceMedia[]
+  comments        Comment[]
+  favorites       Favorite[]
+
+  @@index([status])
+  @@index([province])
+  @@index([provinceId])
+  @@index([districtId])
+  @@index([categoryId])
+  @@index([deletedAt])
+  @@map("places")
+}
+
+model PlaceMedia {
+  id           String    @id @default(uuid())
+  placeId      String
+  url          String
+  thumbnailUrl String?
+  mediaType    String    @default("IMAGE")
+  sortOrder    Int       @default(0)
+  isCover      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+
+  place        Place     @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@index([deletedAt])
+  @@map("place_media")
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  placeId   String
+  userId    String
+  parentId  String?
+  content   String    @db.Text
+  rating    Int?
+  images    String[]  @default([])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  place     Place     @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([placeId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("comments")
+}
+
+model Favorite {
+  id           String       @id @default(uuid())
+  userId       String
+  placeId      String
+  listType     FavoriteType @default(WANNA_GO)
+  personalNote String?
+  createdAt    DateTime     @default(now())
+  deletedAt    DateTime?
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place        Place        @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId, listType])
+  @@index([userId])
+  @@index([placeId])
+  @@index([deletedAt])
+  @@map("favorites")
+}
+
+model Banner {
+  id          String    @id @default(uuid())
+  titleLo     String
+  titleEn     String?
+  subtitleLo  String?
+  subtitleEn  String?
+  imageUrl    String
+  linkUrl     String?
+  placeId     String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@index([deletedAt])
+  @@map("banners")
+}
+
