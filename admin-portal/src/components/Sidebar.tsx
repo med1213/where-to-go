@@ -15,10 +15,6 @@ import {
   PlusCircle,
   BarChart3,
   Sliders,
-  ChevronLeft,
-  ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from 'lucide-react';
 import { AdminTab } from '../types';
 
@@ -29,7 +25,7 @@ interface SidebarProps {
   onLogout: () => void;
   onOpenPostPlace?: () => void;
   isCollapsed: boolean;
-  onToggleCollapse: () => void;
+  onToggleCollapse?: () => void;
 }
 
 export default function Sidebar({
@@ -39,7 +35,6 @@ export default function Sidebar({
   onLogout,
   onOpenPostPlace,
   isCollapsed,
-  onToggleCollapse,
 }: SidebarProps) {
   const navItems: {
     id: AdminTab;
@@ -156,19 +151,6 @@ export default function Sidebar({
                 </div>
               )}
             </div>
-
-            {/* Toggle Collapse/Expand Button */}
-            <button
-              onClick={onToggleCollapse}
-              title={isCollapsed ? 'ຂະຫຍາຍເມນູ (Expand Sidebar)' : 'ຫຍໍ້ເມນູ (Collapse Sidebar)'}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-            >
-              {isCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4 text-teal-400" />
-              ) : (
-                <PanelLeftClose className="w-4 h-4" />
-              )}
-            </button>
           </div>
 
           {/* Quick Post Place Button */}
