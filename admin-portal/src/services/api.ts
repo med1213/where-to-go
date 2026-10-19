@@ -173,6 +173,17 @@ export const adminApi = {
     return res;
   },
 
+  logout: async () => {
+    try {
+      await rawAdminRequest('/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors during logout
+    } finally {
+      authStorage.clearToken();
+      apiCache.clear();
+    }
+  },
+
   getStats: (): Promise<AdminStats> => adminRequest('/admin/stats'),
 
   getPendingPlaces: (page = 1, limit = 50): Promise<{ items: Place[]; meta: any }> =>

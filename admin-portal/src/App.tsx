@@ -92,20 +92,28 @@ export default function App() {
     }
   }, [user, selectedProvince, location.pathname]);
 
-  const handleLogout = () => {
-    authStorage.clearToken();
-    localStorage.removeItem('wtg_admin_user');
+  const handleLogout = async () => {
+    await adminApi.logout();
     setUser(null);
+    navigate('/login', { replace: true });
   };
 
   if (!user) {
     return (
-      <AdminLogin
-        onLoginSuccess={(u) => {
-          setUser(u);
-          navigate('/dashboard');
-        }}
-      />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <AdminLogin
+              onLoginSuccess={(u) => {
+                setUser(u);
+                navigate('/dashboard', { replace: true });
+              }}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
@@ -209,6 +217,7 @@ export default function App() {
           {/* Full React Router Switcher */}
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
             <Route
               path="/dashboard"
               element={
