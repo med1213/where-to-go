@@ -258,7 +258,7 @@ export default function PlaceDetailClient({ id }: PlaceDetailClientProps) {
             className="inline-flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-teal-700 bg-white px-3.5 py-2 rounded-xl border border-stone-200 shadow-xs transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{lang === 'lo' ? '← ກັບຄືນໜ້າສຳຫຼວດ' : '← Back to Discovery'}</span>
+            <span>{lang === 'lo' ? 'ກັບຄືນໜ້າສຳຫຼວດ' : 'Back to Discovery'}</span>
           </Link>
         </div>
 
