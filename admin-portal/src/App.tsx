@@ -17,10 +17,22 @@ import DashboardReporting from './components/DashboardReporting';
 import BannerManagement from './components/BannerManagement';
 import { adminApi, authStorage } from './services/api';
 import { AdminStats, Place, TrashData } from './types';
-import { RefreshCw, PlusCircle } from 'lucide-react';
+import { RefreshCw, PlusCircle, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<any>(authStorage.getUser());
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('wtg_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('wtg_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -133,49 +145,66 @@ export default function App() {
         user={user}
         onLogout={handleLogout}
         onOpenPostPlace={() => setIsCreatePlaceOpen(true)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-stone-200 px-8 flex items-center justify-between flex-shrink-0">
-          <div>
-            <h1 className="text-base font-bold text-stone-900">
-              {getHeaderTitle(location.pathname)}
-            </h1>
-            <p className="text-[11px] text-stone-400">
-              WhereToGo Laos Full Administration Suite • React Router & Noto Sans Lao
-            </p>
+        <header className="h-16 bg-white border-b border-stone-200 px-6 sm:px-8 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSidebar}
+              title={isSidebarCollapsed ? 'ຂະຫຍາຍເມນູ (Expand Sidebar)' : 'ຫຍໍ້ເມນູ (Collapse Sidebar)'}
+              className="p-2 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeftOpen className="w-4 h-4 text-teal-600" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
+            </button>
+            <div>
+              <h1 className="text-base font-bold text-stone-900">
+                {getHeaderTitle(location.pathname)}
+              </h1>
+              <p className="text-[11px] text-stone-400">
+                WhereToGo Laos Full Administration Suite • React Router & Noto Sans Lao
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Admin Post Place Button */}
             <button
               onClick={() => setIsCreatePlaceOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer"
             >
               <PlusCircle className="w-4 h-4 text-amber-300" />
-              <span>Post a Place (Admin)</span>
+              <span className="hidden sm:inline">Post a Place (Admin)</span>
             </button>
 
             <button
               onClick={() => fetchDashboardData(true)}
               disabled={isLoading}
               title="Refresh Data (Force Fetch)"
-              className="p-2 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-600 transition-colors"
+              className="p-2 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-teal-600' : ''}`} />
             </button>
-            <div className="px-3 py-1 bg-teal-50 text-teal-800 rounded-full border border-teal-200 text-xs font-semibold">
+            <div className="hidden sm:block px-3 py-1 bg-teal-50 text-teal-800 rounded-full border border-teal-200 text-xs font-semibold">
               PS512 JWT Auth Active
             </div>
           </div>
         </header>
 
         {/* Scrollable View */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          {/* Top Metric Cards */}
-          <StatsCards stats={stats} />
+        <main className="flex-1 p-6 sm:p-8 overflow-y-auto">
+          {/* Top Metric Cards - only show on non-dashboard subpages to avoid duplicate static cards */}
+          {location.pathname !== '/dashboard' && location.pathname !== '/' && (
+            <StatsCards stats={stats} />
+          )}
 
           {/* Full React Router Switcher */}
           <Routes>
