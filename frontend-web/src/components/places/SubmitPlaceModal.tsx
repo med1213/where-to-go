@@ -20,7 +20,21 @@ import {
   Loader2,
   Star,
   Trash2,
+  Navigation,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const MapCoordinatePicker = dynamic(
+  () => import('../common/MapCoordinatePicker'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-56 rounded-2xl bg-stone-100 flex items-center justify-center text-xs text-stone-400">
+        Loading map...
+      </div>
+    ),
+  }
+);
 
 interface SubmitPlaceModalProps {
   isOpen: boolean;
@@ -55,6 +69,8 @@ export default function SubmitPlaceModal({
   const [selectedDistrictName, setSelectedDistrictName] = useState<string>('');
 
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
 
   // Dual Currency Pricing
   const [priceLao, setPriceLao] = useState('');
@@ -207,6 +223,8 @@ export default function SubmitPlaceModal({
       district: selectedDistrictName || undefined,
       districtId: selectedDistrictId,
       address: address.trim() || undefined,
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
       priceLao: priceLao.trim() ? `${priceLao.trim()} ₭` : undefined,
       priceForeigner: priceForeigner.trim() ? `${priceForeigner.trim()}` : undefined,
       mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
@@ -349,6 +367,57 @@ export default function SubmitPlaceModal({
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Address / Landmark */}
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                  {lang === 'lo' ? 'ທີ່ຢູ່ລະອຽດ ຫຼື ຈຸດສັງເກດ (Address / Landmark)' : 'Address / Landmark'}
+                </label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder={lang === 'lo' ? 'e.g. ບ້ານຫຼວງ, ຫ່າງຈາກຕົວເມືອງ 29km' : 'e.g. Ban Luang, 29km from town center'}
+                  className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 text-xs focus:ring-2 focus:ring-teal-600 focus:bg-white"
+                />
+              </div>
+
+              {/* Interactive Laos Map Coordinates Picker */}
+              <div className="p-3.5 bg-stone-50/80 rounded-2xl border border-stone-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                    <Navigation className="w-3.5 h-3.5 text-teal-600" />
+                    <span>{lang === 'lo' ? 'ປັກໝຸດພິກັດເທິງແຜນທີ່ (Interactive Map)' : 'Pin Coordinates on Map'}</span>
+                  </label>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="Lat"
+                      value={latitude}
+                      onChange={(e) => setLatitude(e.target.value)}
+                      className="w-20 px-2 py-0.5 bg-white border border-stone-200 rounded-lg text-xs font-mono"
+                    />
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="Lng"
+                      value={longitude}
+                      onChange={(e) => setLongitude(e.target.value)}
+                      className="w-20 px-2 py-0.5 bg-white border border-stone-200 rounded-lg text-xs font-mono"
+                    />
+                  </div>
+                </div>
+                <MapCoordinatePicker
+                  latitude={latitude}
+                  longitude={longitude}
+                  onChange={(lat, lng) => {
+                    setLatitude(String(lat));
+                    setLongitude(String(lng));
+                  }}
+                  lang={lang}
+                />
               </div>
 
               {/* Description */}
