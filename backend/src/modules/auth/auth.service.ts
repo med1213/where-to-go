@@ -241,9 +241,18 @@ export class AuthService {
   }
 
   async logout(userId: string, rawToken?: string) {
-    // 1. Blacklist the current Access Token immediately
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
+    // 1. Blacklist the current Access Token immediately with user context
     if (rawToken) {
-      await this.blacklistService.revokeToken(rawToken);
+      await this.blacklistService.revokeToken(rawToken, {
+        userId,
+        username: user?.username || undefined,
+        reason: 'USER_LOGOUT',
+      });
     }
 
     // 2. Wipe Refresh Token & update lastLogoutAt timestamp (Invalidates any older tokens)

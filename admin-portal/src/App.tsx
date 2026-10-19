@@ -2,19 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import StatsCards from './components/StatsCards';
-import ReviewQueue from './components/ReviewQueue';
-import PlacesList from './components/PlacesList';
-import ProvincesManagement from './components/ProvincesManagement';
-import UserManagement from './components/UserManagement';
-import CategoryManagement from './components/CategoryManagement';
-import CommentModeration from './components/CommentModeration';
-import TrashBin from './components/TrashBin';
 import RejectModal from './components/RejectModal';
-import AdminLogin from './components/AdminLogin';
-import RankTierLeaderboard from './components/RankTierLeaderboard';
 import AdminCreatePlaceModal from './components/AdminCreatePlaceModal';
-import DashboardReporting from './components/DashboardReporting';
-import BannerManagement from './components/BannerManagement';
+
+// Dedicated Pages Architecture
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ReviewsPage from './pages/ReviewsPage';
+import PlacesPage from './pages/PlacesPage';
+import RankingsPage from './pages/RankingsPage';
+import BannersPage from './pages/BannersPage';
+import ProvincesPage from './pages/ProvincesPage';
+import UsersPage from './pages/UsersPage';
+import CategoriesPage from './pages/CategoriesPage';
+import CommentsPage from './pages/CommentsPage';
+import TrashPage from './pages/TrashPage';
+
 import { adminApi, authStorage } from './services/api';
 import { AdminStats, Place, TrashData } from './types';
 import { RefreshCw, PlusCircle, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -104,7 +107,7 @@ export default function App() {
         <Route
           path="/login"
           element={
-            <AdminLogin
+            <LoginPage
               onLoginSuccess={(u) => {
                 setUser(u);
                 navigate('/dashboard', { replace: true });
@@ -221,7 +224,7 @@ export default function App() {
             <Route
               path="/dashboard"
               element={
-                <DashboardReporting
+                <DashboardPage
                   stats={stats}
                   places={allPlaces}
                   pendingPlaces={pendingPlaces}
@@ -231,7 +234,7 @@ export default function App() {
             <Route
               path="/reviews"
               element={
-                <ReviewQueue
+                <ReviewsPage
                   places={pendingPlaces}
                   onRefresh={fetchDashboardData}
                   onOpenRejectModal={(p) => setRejectingPlace(p)}
@@ -241,7 +244,7 @@ export default function App() {
             <Route
               path="/places"
               element={
-                <PlacesList
+                <PlacesPage
                   places={allPlaces}
                   onRefresh={fetchDashboardData}
                   selectedProvince={selectedProvince}
@@ -249,18 +252,18 @@ export default function App() {
                 />
               }
             />
-            <Route path="/rankings" element={<RankTierLeaderboard />} />
+            <Route path="/rankings" element={<RankingsPage />} />
             <Route
               path="/banners"
-              element={<BannerManagement places={allPlaces} />}
+              element={<BannersPage places={allPlaces} />}
             />
-            <Route path="/provinces" element={<ProvincesManagement />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/categories" element={<CategoryManagement />} />
-            <Route path="/comments" element={<CommentModeration />} />
+            <Route path="/provinces" element={<ProvincesPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/comments" element={<CommentsPage />} />
             <Route
               path="/trash"
-              element={<TrashBin trash={trashData} onRefresh={fetchDashboardData} />}
+              element={<TrashPage trash={trashData} onRefresh={fetchDashboardData} />}
             />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
   AdminStats,
   Place,
@@ -44,86 +45,124 @@ export const clearApiCache = () => {
   apiCache.clear();
 };
 
-// In-flight refresh token promise mutex
-let activeRefreshPromise: Promise<string | null> | null = null;
-
-async function rawAdminRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = authStorage.getToken();
-
-  const headers: Record<string, string> = {
+/**
+ * 🚀 Axios HTTP Client with Global Request & Response Interceptors
+ */
+export const httpClient = axios.create({
+  baseURL: API_BASE,
+  headers: {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  };
+  },
+});
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+// 1. Request Interceptor: Attach PS512 JWT Bearer Token automatically
+httpClient.interceptors.request.use(
+  (config) => {
+    const token = authStorage.getToken();
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// 2. Response Interceptor: Catch 401s, rotate tokens, and auto-redirect to /login if revoked
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
+httpClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response ? error.response.status : null;
+
+    if (status === 401 && !originalRequest._retry) {
+      // If auth endpoints failed, do not retry
+      if (
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/refresh') ||
+        originalRequest.url?.includes('/auth/logout')
+      ) {
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return httpClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = authStorage.getRefreshToken() || authStorage.getToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Direct call without interceptor loop
+        const res = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
+        const { accessToken, refreshToken: newRefreshToken } = res.data;
+
+        authStorage.setToken(accessToken, newRefreshToken);
+        httpClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+        processQueue(null, accessToken);
+        return httpClient(originalRequest);
+      } catch (refreshErr) {
+        processQueue(refreshErr, null);
+        authStorage.clearToken();
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
   }
+);
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
+async function rawAdminRequest<T>(endpoint: string, options: any = {}): Promise<T> {
+  const method = (options.method || 'GET').toLowerCase();
+  const data = options.body
+    ? typeof options.body === 'string'
+      ? JSON.parse(options.body)
+      : options.body
+    : undefined;
+
+  const res = await httpClient.request<T>({
+    url: endpoint,
+    method,
+    data,
+    headers: options.headers,
   });
 
-  // Handle 401 Unauthorized via single-flight Refresh Token mutex
-  if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
-    if (!activeRefreshPromise) {
-      activeRefreshPromise = (async () => {
-        const refreshToken = authStorage.getRefreshToken() || authStorage.getToken();
-        if (!refreshToken) return null;
-        try {
-          const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken }),
-          });
-
-          if (refreshRes.ok) {
-            const newTokens = await refreshRes.json();
-            authStorage.setToken(newTokens.accessToken, newTokens.refreshToken);
-            return newTokens.accessToken as string;
-          } else {
-            authStorage.clearToken();
-            localStorage.removeItem('wtg_admin_user');
-            return null;
-          }
-        } catch {
-          authStorage.clearToken();
-          localStorage.removeItem('wtg_admin_user');
-          return null;
-        } finally {
-          activeRefreshPromise = null;
-        }
-      })();
-    }
-
-    const newAccessToken = await activeRefreshPromise;
-    if (newAccessToken) {
-      headers['Authorization'] = `Bearer ${newAccessToken}`;
-      // Retry original request with newly refreshed token
-      const retryRes = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
-        headers,
-      });
-      if (!retryRes.ok) {
-        const errData = await retryRes.json().catch(() => ({}));
-        throw new Error(errData.message || 'Request failed after token refresh');
-      }
-      return retryRes.json();
-    }
-  }
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const message = Array.isArray(errorData.message)
-      ? errorData.message.join(', ')
-      : errorData.message || `HTTP ${response.status}: ${response.statusText}`;
-    throw new Error(message);
-  }
-
-  return response.json();
+  return res.data;
 }
 
-async function adminRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function adminRequest<T>(endpoint: string, options: any = {}): Promise<T> {
   const method = (options.method || 'GET').toUpperCase();
 
   // If writing data, invalidate cache

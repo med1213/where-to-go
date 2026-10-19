@@ -239,9 +239,14 @@ model Banner {
 model RevokedToken {
   id        String   @id @default(uuid())
   tokenHash String   @unique
+  userId    String?
+  username  String?
+  reason    String?  @default("USER_LOGOUT")
   expiresAt DateTime
   createdAt DateTime @default(now())
 
+  @@index([userId])
+  @@index([username])
   @@index([expiresAt])
   @@map("revoked_tokens")
 }

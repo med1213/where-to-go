@@ -22,7 +22,10 @@ export class TokenBlacklistService implements OnModuleInit {
   /**
    * Revoke and blacklist an Access Token immediately
    */
-  async revokeToken(rawToken: string, expiresAt?: Date): Promise<void> {
+  async revokeToken(
+    rawToken: string,
+    options?: { userId?: string; username?: string; reason?: string; expiresAt?: Date }
+  ): Promise<void> {
     if (!rawToken || typeof rawToken !== 'string') return;
     const cleanToken = rawToken.replace(/^Bearer\s+/i, '').trim();
     if (!cleanToken) return;
@@ -30,16 +33,29 @@ export class TokenBlacklistService implements OnModuleInit {
     const tokenHash = this.hashToken(cleanToken);
     this.blacklistedHashes.add(tokenHash);
 
-    // Default expiry: 30 minutes from now (covers 15m access token lifetime + buffer)
-    const exp = expiresAt || new Date(Date.now() + 30 * 60 * 1000);
+    // Default expiry: 60 minutes from now (covers 15m access token lifetime + safe buffer)
+    const exp = options?.expiresAt || new Date(Date.now() + 60 * 60 * 1000);
 
     try {
       await this.prisma.revokedToken.upsert({
         where: { tokenHash },
-        update: { expiresAt: exp },
-        create: { tokenHash, expiresAt: exp },
+        update: {
+          expiresAt: exp,
+          userId: options?.userId,
+          username: options?.username,
+          reason: options?.reason || 'USER_LOGOUT',
+        },
+        create: {
+          tokenHash,
+          expiresAt: exp,
+          userId: options?.userId,
+          username: options?.username,
+          reason: options?.reason || 'USER_LOGOUT',
+        },
       });
-      this.logger.log(`🔒 Token revoked & added to blacklist (Hash: ${tokenHash.slice(0, 10)}...)`);
+      this.logger.log(
+        `🔒 Token revoked & blacklisted in DB (User: ${options?.username || options?.userId || 'unknown'}, Hash: ${tokenHash.slice(0, 10)}...)`
+      );
     } catch (err) {
       this.logger.error(`Failed to persist revoked token in database`, err);
     }
