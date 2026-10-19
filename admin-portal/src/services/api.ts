@@ -15,7 +15,7 @@ import {
   ActiveSessionUser,
 } from '../types';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000/api/v1';
 
 export const authStorage = {
   getToken: () => localStorage.getItem('wtg_admin_token'),
@@ -520,6 +520,27 @@ export const adminApi = {
     );
     return res.data;
   },
+
+  // --- Image & Media Upload Module ---
+
+  uploadSingleImage: async (file: File): Promise<{ url: string; thumbnailUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await httpClient.post<{ url: string; thumbnailUrl: string }>('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
+  uploadMultipleImages: async (files: File[]): Promise<Array<{ url: string; thumbnailUrl: string }>> => {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    const res = await httpClient.post<Array<{ url: string; thumbnailUrl: string }>>('/upload/images', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
 };
+
 
 

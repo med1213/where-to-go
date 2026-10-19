@@ -15,7 +15,9 @@ import {
   Trash2,
   Star,
   Layers,
+  Navigation,
 } from 'lucide-react';
+import MapCoordinatePicker from './MapCoordinatePicker';
 
 interface AdminEditPlaceModalProps {
   isOpen: boolean;
@@ -46,6 +48,8 @@ export default function AdminEditPlaceModal({
     description: '',
     priceLao: '',
     priceForeigner: '',
+    latitude: '',
+    longitude: '',
   });
 
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
@@ -70,6 +74,8 @@ export default function AdminEditPlaceModal({
         description: place.description || '',
         priceLao: place.priceLao || '',
         priceForeigner: place.priceForeigner || '',
+        latitude: place.latitude !== null && place.latitude !== undefined ? String(place.latitude) : '',
+        longitude: place.longitude !== null && place.longitude !== undefined ? String(place.longitude) : '',
       });
 
       // Extract existing images
@@ -197,6 +203,8 @@ export default function AdminEditPlaceModal({
         description: form.description || undefined,
         priceLao: form.priceLao || undefined,
         priceForeigner: form.priceForeigner || undefined,
+        latitude: form.latitude ? parseFloat(form.latitude) : undefined,
+        longitude: form.longitude ? parseFloat(form.longitude) : undefined,
         mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
       };
 
@@ -340,6 +348,39 @@ export default function AdminEditPlaceModal({
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600"
+            />
+          </div>
+
+          {/* Interactive Laos Map Coordinates Picker */}
+          <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-stone-800 font-lao flex items-center gap-1.5">
+                <Navigation className="w-3.5 h-3.5 text-teal-600" />
+                <span>ປັກໝຸດພິກັດເທິງແຜນທີ່ (Interactive Map Coordinates)</span>
+              </label>
+              <div className="flex items-center gap-2 text-xs">
+                <input
+                  type="number"
+                  step="any"
+                  placeholder="Lat"
+                  value={form.latitude}
+                  onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+                  className="w-24 px-2 py-1 bg-white border border-stone-200 rounded-lg text-xs font-mono"
+                />
+                <input
+                  type="number"
+                  step="any"
+                  placeholder="Lng"
+                  value={form.longitude}
+                  onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+                  className="w-24 px-2 py-1 bg-white border border-stone-200 rounded-lg text-xs font-mono"
+                />
+              </div>
+            </div>
+            <MapCoordinatePicker
+              latitude={form.latitude}
+              longitude={form.longitude}
+              onChange={(lat, lng) => setForm((prev) => ({ ...prev, latitude: String(lat), longitude: String(lng) }))}
             />
           </div>
 
