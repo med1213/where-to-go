@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Compass, Navigation } from 'lucide-react';
 
 interface MapCoordinatePickerProps {
@@ -147,21 +147,33 @@ export default function MapCoordinatePicker({
     }
   };
 
+  const [isLocating, setIsLocating] = useState(false);
+
   const handleGetCurrentLocation = () => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      setIsLocating(true);
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          setIsLocating(false);
           const lat = parseFloat(pos.coords.latitude.toFixed(6));
           const lng = parseFloat(pos.coords.longitude.toFixed(6));
           onChange(lat, lng);
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.setView([lat, lng], 14);
+            mapInstanceRef.current.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
           }
         },
         (err) => {
+          setIsLocating(false);
           alert('GPS error: ' + err.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
+    } else {
+      alert('Geolocation is not supported by your browser.');
     }
   };
 

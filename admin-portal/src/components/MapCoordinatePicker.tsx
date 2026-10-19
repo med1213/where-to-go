@@ -164,11 +164,16 @@ export default function MapCoordinatePicker({
           const lng = parseFloat(pos.coords.longitude.toFixed(6));
           onChange(lat, lng);
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.setView([lat, lng], 14);
+            mapInstanceRef.current.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
           }
         },
         (err) => {
           alert('GPS Geolocation error: ' + err.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
     } else {

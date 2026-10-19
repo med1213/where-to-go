@@ -36,6 +36,19 @@ import {
 } from 'lucide-react';
 import ShareModal from '../../../components/common/ShareModal';
 import { compressMultipleImages } from '../../../lib/image-compressor';
+import dynamic from 'next/dynamic';
+
+const PlaceLocationMap = dynamic(
+  () => import('../../../components/places/PlaceLocationMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs h-64 flex items-center justify-center text-xs text-stone-400">
+        Loading map & directions...
+      </div>
+    ),
+  }
+);
 
 interface PlaceDetailClientProps {
   id: string;
@@ -785,8 +798,18 @@ export default function PlaceDetailClient({ id }: PlaceDetailClientProps) {
                 </div>
               </div>
 
-              {/* Right Column: Pricing & Quick Facts */}
+              {/* Right Column: Location Map & Pricing */}
               <div className="space-y-6">
+                {/* Interactive Map & Direct Navigation */}
+                <PlaceLocationMap
+                  placeTitle={place.title}
+                  latitude={place.latitude}
+                  longitude={place.longitude}
+                  province={place.province}
+                  address={place.address}
+                  lang={lang}
+                />
+
                 {/* Dual Currency Pricing Card */}
                 <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
                   <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
