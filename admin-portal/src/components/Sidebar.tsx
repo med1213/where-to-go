@@ -97,6 +97,13 @@ export default function Sidebar({
       icon: Users,
     },
     {
+      id: 'security',
+      path: '/security',
+      labelLo: 'ຄວາມປອດໄພ & Session',
+      labelEn: 'Security & Sessions',
+      icon: Shield,
+    },
+    {
       id: 'categories',
       path: '/categories',
       labelLo: 'ໝວດໝູ່ສະຖານທີ່',

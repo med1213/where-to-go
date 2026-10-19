@@ -5,17 +5,22 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 
 @ApiTags('Authentication (JWT PS512)')
 @Controller('auth')
@@ -78,4 +83,37 @@ export class AuthController {
   async me(@CurrentUser() user: any) {
     return user;
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-PS512')
+  @Get('security/revoked-tokens')
+  @ApiOperation({ summary: 'Admin Security: View blacklisted / revoked tokens' })
+  async getRevokedTokens(@Query('limit') limit?: string) {
+    const lim = limit ? parseInt(limit, 10) : 100;
+    return this.authService.getRevokedTokens(isNaN(lim) ? 100 : lim);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-PS512')
+  @Get('security/active-sessions')
+  @ApiOperation({ summary: 'Admin Security: View active logged-in user sessions' })
+  async getActiveSessions() {
+    return this.authService.getActiveSessions();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-PS512')
+  @HttpCode(HttpStatus.OK)
+  @Post('security/force-logout/:userId')
+  @ApiOperation({ summary: 'Admin Security: Force revoke session for a specific user' })
+  async forceLogout(
+    @Param('userId') targetUserId: string,
+    @CurrentUser('username') adminUsername?: string,
+  ) {
+    return this.authService.forceLogoutUser(targetUserId, adminUsername);
+  }
 }
+

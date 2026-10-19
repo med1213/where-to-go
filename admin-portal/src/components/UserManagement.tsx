@@ -21,7 +21,9 @@ import {
   Check,
   Eye,
   Lock,
+  Download,
 } from 'lucide-react';
+import { exportToCsv } from '../utils/export';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -187,6 +189,20 @@ export default function UserManagement() {
   const totalModerators = users.filter((u) => u.role === 'MODERATOR').length;
   const totalRegular = users.filter((u) => u.role === 'USER').length;
 
+  const handleExportCsv = () => {
+    const rows = filteredUsers.map((u) => ({
+      ID: u.id,
+      DisplayName: u.displayName,
+      Username: u.username || '',
+      Phone: u.phoneNumber || '',
+      Role: u.role,
+      LastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '',
+      CreatedAt: new Date(u.createdAt).toLocaleDateString(),
+    }));
+    exportToCsv(`wheretogo_users_${new Date().toISOString().slice(0, 10)}`, rows);
+    setSuccessMsg('ດາວໂຫຼດ CSV ສຳເລັດແລ້ວ! (Exported Users CSV)');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Quick Stats */}
@@ -201,19 +217,27 @@ export default function UserManagement() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={fetchUsers}
             disabled={isLoading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 text-xs font-semibold shadow-sm transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-teal-600' : ''}`} />
             <span>ໂຫຼດໃໝ່</span>
           </button>
 
           <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-700 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md shadow-teal-900/10 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md shadow-teal-900/10 transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>ເພີ່ມຜູ້ໃຊ້ໃໝ່ (Create User)</span>

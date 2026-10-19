@@ -17,12 +17,15 @@ import UsersPage from './pages/UsersPage';
 import CategoriesPage from './pages/CategoriesPage';
 import CommentsPage from './pages/CommentsPage';
 import TrashPage from './pages/TrashPage';
+import SecurityPage from './pages/SecurityPage';
+import { useLanguage } from './context/LanguageContext';
 
 import { adminApi, authStorage } from './services/api';
 import { AdminStats, Place, TrashData } from './types';
 import { RefreshCw, PlusCircle, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 export default function App() {
+  const { language, toggleLanguage, t } = useLanguage();
   const [user, setUser] = useState<any>(authStorage.getUser());
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('wtg_sidebar_collapsed') === 'true';
@@ -204,6 +207,17 @@ export default function App() {
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-teal-600' : ''}`} />
             </button>
+
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              title="Toggle Language / ປ່ຽນພາສາ"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-700 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 bg-white"
+            >
+              <span className="text-sm">{language === 'lo' ? '🇱🇦' : '🇬🇧'}</span>
+              <span>{language === 'lo' ? 'ພາສາລາວ' : 'English'}</span>
+            </button>
+
             <div className="hidden sm:block px-3 py-1 bg-teal-50 text-teal-800 rounded-full border border-teal-200 text-xs font-semibold">
               PS512 JWT Auth Active
             </div>
@@ -261,6 +275,7 @@ export default function App() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/comments" element={<CommentsPage />} />
+            <Route path="/security" element={<SecurityPage />} />
             <Route
               path="/trash"
               element={<TrashPage trash={trashData} onRefresh={fetchDashboardData} />}

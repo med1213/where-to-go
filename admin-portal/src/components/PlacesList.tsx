@@ -18,7 +18,10 @@ import {
   Edit2,
   Image as ImageIcon,
   Layers,
+  Download,
 } from 'lucide-react';
+import { exportToCsv } from '../utils/export';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PlacesListProps {
   places: Place[];
@@ -71,6 +74,27 @@ export default function PlacesList({
     return matchesSearch && matchesProvince;
   });
 
+  const handleExportCsv = () => {
+    const rows = filteredPlaces.map((p) => ({
+      ID: p.id,
+      Title: p.title,
+      Slug: p.slug,
+      Province: p.province,
+      District: p.district || '',
+      Status: p.status,
+      PriceLao: p.priceLao || '',
+      PriceForeigner: p.priceForeigner || '',
+      ViewCount: p.viewCount,
+      FavoriteCount: p.favoriteCount,
+      CommentCount: p.commentCount,
+      Latitude: p.latitude || '',
+      Longitude: p.longitude || '',
+      CreatedAt: new Date(p.createdAt).toLocaleDateString(),
+    }));
+    exportToCsv(`wheretogo_places_${new Date().toISOString().slice(0, 10)}`, rows);
+    success('ດາວໂຫຼດ CSV ສຳເລັດແລ້ວ! (Exported Places CSV)');
+  };
+
   return (
     <div className="space-y-6">
       {/* Title & 18 Provinces Filter Controls */}
@@ -85,13 +109,20 @@ export default function PlacesList({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <span className="px-3 py-1.5 rounded-xl bg-teal-50 text-teal-800 text-xs font-bold border border-teal-200/60 font-lao">
               ພົບ {filteredPlaces.length} ສະຖານທີ່
             </span>
             <button
+              onClick={handleExportCsv}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-700 rounded-xl text-xs font-bold transition-colors font-lao cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-emerald-600" />
+              <span>Export CSV</span>
+            </button>
+            <button
               onClick={() => setIsCreateOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors font-lao"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors font-lao cursor-pointer"
             >
               <PlusCircle className="w-4 h-4 text-amber-300" />
               <span>+ ໂພສສະຖານທີ່ (Admin Post)</span>

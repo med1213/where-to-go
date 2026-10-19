@@ -11,6 +11,8 @@ import {
   DistrictItem,
   RankedPlace,
   BannerItem,
+  RevokedTokenRecord,
+  ActiveSessionUser,
 } from '../types';
 
 const API_BASE = 'http://localhost:4000/api/v1';
@@ -500,5 +502,24 @@ export const adminApi = {
 
   deleteBanner: (id: string): Promise<any> =>
     adminRequest(`/banners/${id}`, { method: 'DELETE' }),
+
+  // --- Security & Blacklist Module ---
+  getRevokedTokens: async (limit = 100): Promise<RevokedTokenRecord[]> => {
+    const res = await httpClient.get<RevokedTokenRecord[]>(`/auth/security/revoked-tokens?limit=${limit}`);
+    return res.data;
+  },
+
+  getActiveSessions: async (): Promise<ActiveSessionUser[]> => {
+    const res = await httpClient.get<ActiveSessionUser[]>('/auth/security/active-sessions');
+    return res.data;
+  },
+
+  forceLogoutUser: async (userId: string): Promise<{ success: boolean; message: string }> => {
+    const res = await httpClient.post<{ success: boolean; message: string }>(
+      `/auth/security/force-logout/${userId}`
+    );
+    return res.data;
+  },
 };
+
 

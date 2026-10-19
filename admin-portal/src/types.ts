@@ -260,4 +260,37 @@ export interface BannerItem {
   updatedAt: string;
 }
 
-export type AdminTab = 'dashboard' | 'reviews' | 'places' | 'rankings' | 'banners' | 'provinces' | 'users' | 'categories' | 'comments' | 'trash';
+export type AdminTab =
+  | 'dashboard'
+  | 'reviews'
+  | 'places'
+  | 'rankings'
+  | 'banners'
+  | 'provinces'
+  | 'users'
+  | 'categories'
+  | 'comments'
+  | 'trash'
+  | 'security';
+
+export interface RevokedTokenRecord {
+  id: string;
+  tokenHash: string;
+  userId?: string | null;
+  username?: string | null;
+  reason?: string | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface ActiveSessionUser {
+  id: string;
+  username: string | null;
+  displayName: string;
+  phoneNumber: string | null;
+  role: string;
+  avatarUrl: string | null;
+  lastLoginAt: string | null;
+  createdAt: string;
+}
+

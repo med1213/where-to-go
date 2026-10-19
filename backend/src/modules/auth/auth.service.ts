@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -268,6 +269,81 @@ export class AuthService {
     this.recentRotations.delete(userId);
 
     return { success: true, message: 'Logged out successfully and token blacklisted' };
+  }
+
+  /**
+   * Fetch recent revoked/blacklisted tokens for Admin Security Audit
+   */
+  async getRevokedTokens(limit = 100) {
+    return this.prisma.revokedToken.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 200),
+    });
+  }
+
+  /**
+   * Fetch active logged-in sessions (users who currently have active refresh token hash)
+   */
+  async getActiveSessions() {
+    return this.prisma.user.findMany({
+      where: {
+        refreshTokenHash: { not: null },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        phoneNumber: true,
+        role: true,
+        avatarUrl: true,
+        lastLoginAt: true,
+        createdAt: true,
+      },
+      orderBy: { lastLoginAt: 'desc' },
+    });
+  }
+
+  /**
+   * Force-revoke a user's active session and blacklist credentials
+   */
+  async forceLogoutUser(targetUserId: string, adminUsername?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, username: true, role: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${targetUserId} not found`);
+    }
+
+    // 1. Invalidate active refresh token in database
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        refreshTokenHash: null,
+        lastLogoutAt: new Date(),
+      },
+    });
+
+    // 2. Clear token rotation cache
+    this.recentRotations.delete(targetUserId);
+
+    // 3. Add an audit entry to revoked_tokens
+    const auditSeed = `force_revoked_${targetUserId}_${Date.now()}`;
+    const auditHash = crypto.createHash('sha256').update(auditSeed).digest('hex');
+
+    await this.blacklistService.revokeToken(auditHash, {
+      userId: targetUserId,
+      username: user.username || undefined,
+      reason: `ADMIN_FORCE_LOGOUT by ${adminUsername || 'Admin'}`,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    return {
+      success: true,
+      message: `User ${user.username || targetUserId} has been logged out and all active sessions revoked.`,
+    };
   }
 
   private async generateTokens(
