@@ -59,9 +59,16 @@ export class AuthController {
   @ApiBearerAuth('JWT-PS512')
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  @ApiOperation({ summary: 'Logout and revoke refresh token' })
-  async logout(@CurrentUser('id') userId: string) {
-    return this.authService.logout(userId);
+  @ApiOperation({ summary: 'Logout, blacklist access token, and revoke refresh token' })
+  async logout(
+    @CurrentUser('id') userId: string,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const rawToken =
+      authHeader && authHeader.toLowerCase().startsWith('bearer ')
+        ? authHeader.slice(7).trim()
+        : undefined;
+    return this.authService.logout(userId, rawToken);
   }
 
   @UseGuards(JwtAuthGuard)

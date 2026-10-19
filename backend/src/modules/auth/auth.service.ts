@@ -12,6 +12,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ensureRsaKeys } from '../../common/security/keys.util';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private blacklistService: TokenBlacklistService,
   ) {
     const keys = ensureRsaKeys();
     this.privateKey = keys.privateKey;
@@ -238,12 +240,25 @@ export class AuthService {
     return tokens;
   }
 
-  async logout(userId: string) {
+  async logout(userId: string, rawToken?: string) {
+    // 1. Blacklist the current Access Token immediately
+    if (rawToken) {
+      await this.blacklistService.revokeToken(rawToken);
+    }
+
+    // 2. Wipe Refresh Token & update lastLogoutAt timestamp (Invalidates any older tokens)
     await this.prisma.user.update({
       where: { id: userId },
-      data: { refreshTokenHash: null },
+      data: {
+        refreshTokenHash: null,
+        lastLogoutAt: new Date(),
+      },
     });
-    return { success: true, message: 'Logged out successfully' };
+
+    // 3. Clear rotation grace cache
+    this.recentRotations.delete(userId);
+
+    return { success: true, message: 'Logged out successfully and token blacklisted' };
   }
 
   private async generateTokens(

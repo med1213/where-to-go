@@ -36,7 +36,7 @@ interface DashboardReportingProps {
   pendingPlaces: Place[];
 }
 
-export type TimeFilterType = 'today' | 'toweek' | 'month' | 'year' | 'custom';
+export type TimeFilterType = 'today' | 'week' | 'month' | 'year' | 'custom';
 
 export default function DashboardReporting({
   stats,
@@ -44,7 +44,7 @@ export default function DashboardReporting({
   pendingPlaces,
 }: DashboardReportingProps) {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
-  const [timeRange, setTimeRange] = useState<TimeFilterType>('toweek');
+  const [timeRange, setTimeRange] = useState<TimeFilterType>('week');
   const [customStart, setCustomStart] = useState<string>(
     new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
   );
@@ -168,7 +168,7 @@ export default function DashboardReporting({
       previousPeriodCount = places.filter(
         (p) => p.createdAt && new Date(p.createdAt).toISOString().slice(0, 10) === yesterdayStr
       ).length;
-    } else if (timeRange === 'toweek') {
+    } else if (timeRange === 'week') {
       periodName = 'ອາທິດນີ້ (This Week)';
       comparisonLabel = 'ທຽບກັບອາທິດຜ່ານມາ (vs Last Week)';
 
@@ -642,51 +642,46 @@ export default function DashboardReporting({
             <div className="inline-flex p-1 bg-stone-100 rounded-xl text-xs font-medium text-stone-600">
               <button
                 onClick={() => setTimeRange('today')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  timeRange === 'today'
+                className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === 'today'
                     ? 'bg-white text-teal-800 font-bold shadow-xs'
                     : 'hover:text-stone-900'
-                }`}
+                  }`}
               >
                 ມື້ນີ້ (Today)
               </button>
               <button
-                onClick={() => setTimeRange('toweek')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  timeRange === 'toweek'
+                onClick={() => setTimeRange('week')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === 'week'
                     ? 'bg-white text-teal-800 font-bold shadow-xs'
                     : 'hover:text-stone-900'
-                }`}
+                  }`}
               >
                 ອາທິດນີ້ (Week)
               </button>
               <button
                 onClick={() => setTimeRange('month')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  timeRange === 'month'
+                className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === 'month'
                     ? 'bg-white text-teal-800 font-bold shadow-xs'
                     : 'hover:text-stone-900'
-                }`}
+                  }`}
               >
                 ເດືອນນີ້ (Month)
               </button>
               <button
                 onClick={() => setTimeRange('year')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  timeRange === 'year'
+                className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === 'year'
                     ? 'bg-white text-teal-800 font-bold shadow-xs'
                     : 'hover:text-stone-900'
-                }`}
+                  }`}
               >
                 ປີນີ້ (Year)
               </button>
               <button
                 onClick={() => setTimeRange('custom')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  timeRange === 'custom'
+                className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === 'custom'
                     ? 'bg-white text-teal-800 font-bold shadow-xs'
                     : 'hover:text-stone-900'
-                }`}
+                  }`}
               >
                 ກຳນົດເອງ (Custom)
               </button>
@@ -752,190 +747,186 @@ export default function DashboardReporting({
         ) : (
           <>
 
-        {/* Highlight Summary Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Current Period Posts with More/Less Indicator */}
-          <div className={`p-4 rounded-2xl border transition-all ${
-            chartAnalytics.isMore
-              ? 'bg-emerald-50/70 border-emerald-200'
-              : chartAnalytics.isLess
-              ? 'bg-amber-50/70 border-amber-200'
-              : 'bg-stone-50 border-stone-200'
-          }`}>
-            <div className="flex items-center justify-between text-xs font-semibold text-stone-500 mb-1">
-              <span>ໂພສໄລຍະນີ້ ({chartAnalytics.periodName})</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/80 font-bold">Current</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-stone-900">{chartAnalytics.currentPeriodCount}</span>
-              <span className="text-xs text-stone-500">ສະຖານທີ່</span>
-            </div>
-            <div className="mt-2.5 flex items-center gap-1.5 text-xs font-bold">
-              {chartAnalytics.isMore ? (
-                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                  <span>+{chartAnalytics.diff} ໂພສ (More / ເພີ່ມຂຶ້ນ +{chartAnalytics.deltaPercent}%)</span>
-                </span>
-              ) : chartAnalytics.isLess ? (
-                <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md">
-                  <ArrowDownRight className="w-3.5 h-3.5" />
-                  <span>{chartAnalytics.diff} ໂພສ (Less / ຫຼຸດລົງ {chartAnalytics.deltaPercent}%)</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-stone-600 bg-stone-200/70 px-2 py-0.5 rounded-md">
-                  <span>= ຄົງທີ່ (Same / ເທົ່າເດີມ)</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Card 2: Previous Period Comparison */}
-          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
-            <div className="flex items-center justify-between text-xs font-semibold text-stone-500 mb-1">
-              <span>ໄລຍະຜ່ານມາ ({chartAnalytics.comparisonLabel})</span>
-              <Clock className="w-3.5 h-3.5 text-stone-400" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-stone-800">{chartAnalytics.previousPeriodCount}</span>
-              <span className="text-xs text-stone-500">ສະຖານທີ່</span>
-            </div>
-            <div className="mt-2.5 text-xs text-stone-500">
-              ຖານປຽບທຽບໄລຍະເວລາກ່ອນໜ້າ
-            </div>
-          </div>
-
-          {/* Card 3: Period Total Visualized */}
-          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
-            <div className="flex items-center justify-between text-xs font-semibold text-stone-500 mb-1">
-              <span>ລວມທັງໝົດໃນກຣາບ</span>
-              <Calendar className="w-3.5 h-3.5 text-stone-400" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-teal-800">{chartAnalytics.totalCount}</span>
-              <span className="text-xs text-stone-500">ລາຍການ</span>
-            </div>
-            <div className="mt-2.5 text-xs text-stone-500">
-              ສູງສຸດ: {chartAnalytics.maxCount} ໂພສ / ຊ່ອງ
-            </div>
-          </div>
-
-          {/* Card 4: Trend Velocity Indicator */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-900 to-stone-900 text-white">
-            <div className="flex items-center justify-between text-xs font-semibold text-teal-200 mb-1">
-              <span>ທ່າອ່ຽງລວມ (Trend Status)</span>
-              <Activity className="w-3.5 h-3.5 text-teal-300" />
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              {chartAnalytics.isMore ? (
-                <>
-                  <TrendingUp className="w-6 h-6 text-emerald-400" />
-                  <span className="text-lg font-bold text-emerald-300">ໂພສເພີ່ມຂຶ້ນ (Surging)</span>
-                </>
-              ) : chartAnalytics.isLess ? (
-                <>
-                  <TrendingDown className="w-6 h-6 text-amber-400" />
-                  <span className="text-lg font-bold text-amber-300">ໂພສຫຼຸດລົງ (Slowing)</span>
-                </>
-              ) : (
-                <>
-                  <Activity className="w-6 h-6 text-teal-300" />
-                  <span className="text-lg font-bold text-teal-200">ຄົງທີ່ (Stable)</span>
-                </>
-              )}
-            </div>
-            <div className="mt-2 text-[11px] text-teal-200/80">
-              ອີງຕາມຂໍ້ມູນການສ້າງເນື້ອຫາຕົວຈິງໃນລະບົບ
-            </div>
-          </div>
-        </div>
-
-        {/* Visual Bar Chart */}
-        <div className="p-6 rounded-2xl bg-stone-50/70 border border-stone-200/80">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-stone-700 uppercase tracking-wider">
-              ເສັ້ນສະແດງການໂພສ ({chartAnalytics.periodName})
-            </span>
-            <span className="text-xs text-stone-400">
-              ສູງສຸດ: {chartAnalytics.maxCount} ໂພສ
-            </span>
-          </div>
-
-          {/* Bar Chart Container */}
-          <div className="h-48 flex items-end gap-2 sm:gap-3 pt-6 pb-2 px-2 border-b border-stone-200 overflow-x-auto">
-            {chartAnalytics.bars.map((d) => {
-              const heightPercent = Math.max(8, Math.round((d.count / chartAnalytics.maxCount) * 100));
-              const isCurrent = d.isCurrent;
-              return (
-                <div
-                  key={d.key}
-                  className="flex-1 min-w-[36px] flex flex-col items-center gap-2 group relative"
-                >
-                  {/* Tooltip on Hover */}
-                  <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-stone-900 text-white text-[10px] font-mono py-1 px-2 rounded-lg whitespace-nowrap z-10 shadow-lg">
-                    {d.label}: {d.count} ໂພສ
-                  </div>
-
-                  {/* Vertical Bar Container */}
-                  <div className="w-full max-w-[42px] h-36 flex flex-col justify-end items-center">
-                    {/* Value on top of bar - only show badge if count > 0 */}
-                    {d.count > 0 ? (
-                      <span
-                        className={`text-[10px] font-mono font-bold mb-1 px-1.5 py-0.5 rounded-md shadow-2xs transition-colors ${
-                          isCurrent
-                            ? 'text-teal-800 bg-teal-100/90 border border-teal-300'
-                            : 'text-stone-700 bg-white border border-stone-200'
-                        }`}
-                      >
-                        {d.count}
-                      </span>
-                    ) : (
-                      <span className="h-4 block" />
-                    )}
-
-                    {/* Bar */}
-                    <div
-                      className={`w-full rounded-t-lg transition-all duration-500 group-hover:brightness-110 ${
-                        isCurrent
-                          ? 'bg-gradient-to-t from-teal-600 to-teal-400 shadow-sm'
-                          : d.count > 0
-                          ? 'bg-gradient-to-t from-stone-400 to-stone-300'
-                          : 'bg-stone-200/50'
-                      }`}
-                      style={{ height: `${d.count > 0 ? heightPercent : 6}%` }}
-                    />
-                  </div>
-
-
-                  {/* Labels */}
-                  <div className="text-center">
-                    <span className={`block text-[11px] font-semibold ${
-                      isCurrent ? 'text-teal-800 font-bold' : 'text-stone-600'
-                    }`}>
-                      {d.label}
-                    </span>
-                    <span className="block text-[9px] text-stone-400 truncate max-w-[50px]">
-                      {d.subLabel}
-                    </span>
-                  </div>
+            {/* Highlight Summary Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card 1: Current Period Posts with More/Less Indicator */}
+              <div className={`p-4 rounded-2xl border transition-all ${chartAnalytics.isMore
+                  ? 'bg-emerald-50/70 border-emerald-200'
+                  : chartAnalytics.isLess
+                    ? 'bg-amber-50/70 border-amber-200'
+                    : 'bg-stone-50 border-stone-200'
+                }`}>
+                <div className="flex items-center justify-between text-xs font-semibold text-stone-500 mb-1">
+                  <span>ໂພສໄລຍະນີ້ ({chartAnalytics.periodName})</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/80 font-bold">Current</span>
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-stone-900">{chartAnalytics.currentPeriodCount}</span>
+                  <span className="text-xs text-stone-500">ສະຖານທີ່</span>
+                </div>
+                <div className="mt-2.5 flex items-center gap-1.5 text-xs font-bold">
+                  {chartAnalytics.isMore ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                      <span>+{chartAnalytics.diff} ໂພສ (More / ເພີ່ມຂຶ້ນ +{chartAnalytics.deltaPercent}%)</span>
+                    </span>
+                  ) : chartAnalytics.isLess ? (
+                    <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md">
+                      <ArrowDownRight className="w-3.5 h-3.5" />
+                      <span>{chartAnalytics.diff} ໂພສ (Less / ຫຼຸດລົງ {chartAnalytics.deltaPercent}%)</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-stone-600 bg-stone-200/70 px-2 py-0.5 rounded-md">
+                      <span>= ຄົງທີ່ (Same / ເທົ່າເດີມ)</span>
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          <div className="flex items-center justify-between text-[11px] text-stone-500 pt-3 px-1">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-teal-500"></span>
-                <span>ປັດຈຸບັນ (Current Period)</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-stone-400"></span>
-                <span>ໄລຍະອື່ນໆ (Other Periods)</span>
-              </span>
+              {/* Card 2: Previous Period Comparison */}
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                <div className="flex items-center justify-between text-xs font-semibold text-stone-500 mb-1">
+                  <span>ໄລຍະຜ່ານມາ ({chartAnalytics.comparisonLabel})</span>
+                  <Clock className="w-3.5 h-3.5 text-stone-400" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-stone-800">{chartAnalytics.previousPeriodCount}</span>
+                  <span className="text-xs text-stone-500">ສະຖານທີ່</span>
+                </div>
+                <div className="mt-2.5 text-xs text-stone-500">
+                  ຖານປຽບທຽບໄລຍະເວລາກ່ອນໜ້າ
+                </div>
+              </div>
+
+              {/* Card 3: Period Total Visualized */}
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                <div className="flex items-center justify-between text-xs font-semibold text-stone-500 mb-1">
+                  <span>ລວມທັງໝົດໃນກຣາບ</span>
+                  <Calendar className="w-3.5 h-3.5 text-stone-400" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-teal-800">{chartAnalytics.totalCount}</span>
+                  <span className="text-xs text-stone-500">ລາຍການ</span>
+                </div>
+                <div className="mt-2.5 text-xs text-stone-500">
+                  ສູງສຸດ: {chartAnalytics.maxCount} ໂພສ / ຊ່ອງ
+                </div>
+              </div>
+
+              {/* Card 4: Trend Velocity Indicator */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-900 to-stone-900 text-white">
+                <div className="flex items-center justify-between text-xs font-semibold text-teal-200 mb-1">
+                  <span>ທ່າອ່ຽງລວມ (Trend Status)</span>
+                  <Activity className="w-3.5 h-3.5 text-teal-300" />
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  {chartAnalytics.isMore ? (
+                    <>
+                      <TrendingUp className="w-6 h-6 text-emerald-400" />
+                      <span className="text-lg font-bold text-emerald-300">ໂພສເພີ່ມຂຶ້ນ (Surging)</span>
+                    </>
+                  ) : chartAnalytics.isLess ? (
+                    <>
+                      <TrendingDown className="w-6 h-6 text-amber-400" />
+                      <span className="text-lg font-bold text-amber-300">ໂພສຫຼຸດລົງ (Slowing)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="w-6 h-6 text-teal-300" />
+                      <span className="text-lg font-bold text-teal-200">ຄົງທີ່ (Stable)</span>
+                    </>
+                  )}
+                </div>
+                <div className="mt-2 text-[11px] text-teal-200/80">
+                  ອີງຕາມຂໍ້ມູນການສ້າງເນື້ອຫາຕົວຈິງໃນລະບົບ
+                </div>
+              </div>
             </div>
-            <span>ອັບເດດ Realtime ຕາມຖານຂໍ້ມູນ PostgreSQL</span>
-          </div>
-        </div>
+
+            {/* Visual Bar Chart */}
+            <div className="p-6 rounded-2xl bg-stone-50/70 border border-stone-200/80">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  ເສັ້ນສະແດງການໂພສ ({chartAnalytics.periodName})
+                </span>
+                <span className="text-xs text-stone-400">
+                  ສູງສຸດ: {chartAnalytics.maxCount} ໂພສ
+                </span>
+              </div>
+
+              {/* Bar Chart Container */}
+              <div className="h-48 flex items-end gap-2 sm:gap-3 pt-6 pb-2 px-2 border-b border-stone-200 overflow-x-auto">
+                {chartAnalytics.bars.map((d) => {
+                  const heightPercent = Math.max(8, Math.round((d.count / chartAnalytics.maxCount) * 100));
+                  const isCurrent = d.isCurrent;
+                  return (
+                    <div
+                      key={d.key}
+                      className="flex-1 min-w-[36px] flex flex-col items-center gap-2 group relative"
+                    >
+                      {/* Tooltip on Hover */}
+                      <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-stone-900 text-white text-[10px] font-mono py-1 px-2 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                        {d.label}: {d.count} ໂພສ
+                      </div>
+
+                      {/* Vertical Bar Container */}
+                      <div className="w-full max-w-[42px] h-36 flex flex-col justify-end items-center">
+                        {/* Value on top of bar - only show badge if count > 0 */}
+                        {d.count > 0 ? (
+                          <span
+                            className={`text-[10px] font-mono font-bold mb-1 px-1.5 py-0.5 rounded-md shadow-2xs transition-colors ${isCurrent
+                                ? 'text-teal-800 bg-teal-100/90 border border-teal-300'
+                                : 'text-stone-700 bg-white border border-stone-200'
+                              }`}
+                          >
+                            {d.count}
+                          </span>
+                        ) : (
+                          <span className="h-4 block" />
+                        )}
+
+                        {/* Bar */}
+                        <div
+                          className={`w-full rounded-t-lg transition-all duration-500 group-hover:brightness-110 ${isCurrent
+                              ? 'bg-gradient-to-t from-teal-600 to-teal-400 shadow-sm'
+                              : d.count > 0
+                                ? 'bg-gradient-to-t from-stone-400 to-stone-300'
+                                : 'bg-stone-200/50'
+                            }`}
+                          style={{ height: `${d.count > 0 ? heightPercent : 6}%` }}
+                        />
+                      </div>
+
+
+                      {/* Labels */}
+                      <div className="text-center">
+                        <span className={`block text-[11px] font-semibold ${isCurrent ? 'text-teal-800 font-bold' : 'text-stone-600'
+                          }`}>
+                          {d.label}
+                        </span>
+                        <span className="block text-[9px] text-stone-400 truncate max-w-[50px]">
+                          {d.subLabel}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-stone-500 pt-3 px-1">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-teal-500"></span>
+                    <span>ປັດຈຸບັນ (Current Period)</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-stone-400"></span>
+                    <span>ໄລຍະອື່ນໆ (Other Periods)</span>
+                  </span>
+                </div>
+                <span>ອັບເດດ Realtime ຕາມຖານຂໍ້ມູນ PostgreSQL</span>
+              </div>
+            </div>
           </>
         )}
       </div>
